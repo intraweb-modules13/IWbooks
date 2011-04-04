@@ -1,6 +1,6 @@
 <?php
 
-class IWbooks_Installer extends Zikula_Installer {
+class IWbooks_Installer extends Zikula_AbstractInstaller {
 
     /**
      * initialise the llibres module
