@@ -9,25 +9,25 @@ class IWbooks_Installer extends Zikula_AbstractInstaller {
      */
     public function install() {
 
-        if (!DBUtil :: createTable('iw_books')) {
+        if (!DBUtil :: createTable('IWbooks')) {
             return false;
         }
 
-        if (!DBUtil :: createTable('iw_books_materies')) {
+        if (!DBUtil :: createTable('IWbooks_materies')) {
             return false;
         }
 
-        ModUtil::setVar('iw_books', 'itemsperpage', 10);
-        ModUtil::setVar('iw_books', 'fpdf', 'modules/iw_books/fpdf153/');
+        ModUtil::setVar('IWbooks', 'itemsperpage', 10);
+        ModUtil::setVar('IWbooks', 'fpdf', 'modules/IWbooks/fpdf153/');
 
         if (date('m') > '5') {
             $cursacademic = date('Y');
         } else {
             $cursacademic = date('Y') - 1;
         }
-        ModUtil::setVar('iw_books', 'any', $cursacademic);
-        ModUtil::setVar('iw_books', 'encap', '');
-        ModUtil::setVar('iw_books', 'plans', '
+        ModUtil::setVar('IWbooks', 'any', $cursacademic);
+        ModUtil::setVar('IWbooks', 'encap', '');
+        ModUtil::setVar('IWbooks', 'plans', '
 PRI#Educació Primària|
 ESO#Educació Secundària Obligatòria|
 BTE#Batxillerat Tecnològic|
@@ -35,8 +35,8 @@ BSO#Batxillerat Social|
 BHU#Batxillerat Humanístic|
 BCI#Batxillerat Científic|
 BAR#Batxillerat Artístic');
-        ModUtil::setVar('iw_books', 'darrer_nivell', '4');
-        ModUtil::setVar('iw_books', 'nivells', '
+        ModUtil::setVar('IWbooks', 'darrer_nivell', '4');
+        ModUtil::setVar('IWbooks', 'nivells', '
 1#1r|
 2#2n|
 3#3r|
@@ -46,15 +46,15 @@ BAR#Batxillerat Artístic');
 A#P3|
 B#P4|
 C#P5');
-        ModUtil::setVar('iw_books', 'llistar_materials', '1');
-        ModUtil::setVar('iw_books', 'mida_font', '11');
-        ModUtil::setVar('iw_books', 'marca_aigua', '0');
+        ModUtil::setVar('IWbooks', 'llistar_materials', '1');
+        ModUtil::setVar('IWbooks', 'mida_font', '11');
+        ModUtil::setVar('IWbooks', 'marca_aigua', '0');
         // Inicialitzat amb �xit
         return true;
     }
 
     public function upgrade($oldversion) {
-        $dom = ZLanguage::getModuleDomain('iw_books');
+        $dom = ZLanguage::getModuleDomain('IWbooks');
         switch ($oldversion) {
             case 0.8:
                 $dbconn =& DBConnectionStack::getConnection(true);
@@ -75,7 +75,7 @@ C#P5');
                     SessionUtil::setVar('errormsg', __('Failed to update the tables', $dom));
                     return false;
                 }
-                ModUtil::setVar('iw_books', 'plans', '
+                ModUtil::setVar('IWbooks', 'plans', '
 PRI#Educació Primària|
 ESO#Educació Secundària Obligatòria|
 BTE#Batxillerat Tecnològic|
@@ -84,8 +84,8 @@ BHU#Batxillerat Humanístic|
 BCI#Batxillerat Científic|
 BAR#Batxillerat Artístic');
 
-                ModUtil::setVar('iw_books', 'darrer_nivell', '4');
-                return iw_books_upgrade(0.9);
+                ModUtil::setVar('IWbooks', 'darrer_nivell', '4');
+                return IWbooks_upgrade(0.9);
 
             case 0.9:
                 // Codi per a versió 1.0
@@ -105,16 +105,16 @@ BAR#Batxillerat Artístic');
                     return false;
                 }
 
-                ModUtil::setVar('iw_books', 'llistar_materials', '1');
-                ModUtil::setVar('iw_books', 'mida_font', '11');
-                ModUtil::setVar('iw_books', 'marca_aigua', '0');
+                ModUtil::setVar('IWbooks', 'llistar_materials', '1');
+                ModUtil::setVar('IWbooks', 'mida_font', '11');
+                ModUtil::setVar('IWbooks', 'marca_aigua', '0');
 
-                return iw_books_upgrade(1.0);
+                return IWbooks_upgrade(1.0);
 
             case 1.0:
                 // Codi per a versió 2.0
-                ModUtil::delVar('iw_books', 'darrer_nivell');
-                ModUtil::setVar('iw_books', 'nivells', '
+                ModUtil::delVar('IWbooks', 'darrer_nivell');
+                ModUtil::setVar('IWbooks', 'nivells', '
 1#1r|
 2#2n|
 3#3r|
@@ -127,18 +127,18 @@ C#P5');
                 $dbconn =& DBConnectionStack::getConnection(true);
                 $pntable = & DBUtil::getTables();
                 $prefix = $GLOBALS[PNConfig][System][prefix];
-                $sql = 'ALTER TABLE ' . $prefix . '_iw_books_llibres
-					RENAME TO ' . $pntable['iw_books'];
+                $sql = 'ALTER TABLE ' . $prefix . '_IWbooks_llibres
+					RENAME TO ' . $pntable['IWbooks'];
                 $dbconn->Execute($sql);
 
-                if (!DBUtil::changeTable('iw_books')) {
+                if (!DBUtil::changeTable('IWbooks')) {
                     return false;
                 }
-                if (!DBUtil::changeTable('iw_books_materies')) {
+                if (!DBUtil::changeTable('IWbooks_materies')) {
                     return false;
                 }
 
-                return iw_books_upgrade(2.0);
+                return IWbooks_upgrade(2.0);
 
                 break;
         }
@@ -148,24 +148,24 @@ C#P5');
     }
 
     /**
-     * Esborrar el mòdul iw_books
+     * Esborrar el mòdul IWbooks
      */
     public function uninstall() {
         // Delete tables
-        DBUtil::dropTable('iw_books');
-        DBUtil::dropTable('iw_books_materies');
+        DBUtil::dropTable('IWbooks');
+        DBUtil::dropTable('IWbooks_materies');
 
         // Esborrar les variables del mòdul
-        ModUtil::delVar('iw_books', 'itemsperpage');
-        ModUtil::delVar('iw_books', 'fpdf');
-        ModUtil::delVar('iw_books', 'any');
-        ModUtil::delVar('iw_books', 'encap');
-        ModUtil::delVar('iw_books', 'plans');
-        ModUtil::delVar('iw_books', 'darrer_nivell');
-        ModUtil::delVar('iw_books', 'nivells');
-        ModUtil::delVar('iw_books', 'llistar_materials');
-        ModUtil::delVar('iw_books', 'mida_font');
-        ModUtil::delVar('iw_books', 'marca_aigua');
+        ModUtil::delVar('IWbooks', 'itemsperpage');
+        ModUtil::delVar('IWbooks', 'fpdf');
+        ModUtil::delVar('IWbooks', 'any');
+        ModUtil::delVar('IWbooks', 'encap');
+        ModUtil::delVar('IWbooks', 'plans');
+        ModUtil::delVar('IWbooks', 'darrer_nivell');
+        ModUtil::delVar('IWbooks', 'nivells');
+        ModUtil::delVar('IWbooks', 'llistar_materials');
+        ModUtil::delVar('IWbooks', 'mida_font');
+        ModUtil::delVar('IWbooks', 'marca_aigua');
         // Acció d'esborrar acabada amb èxit
         return true;
     }

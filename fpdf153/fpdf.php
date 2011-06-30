@@ -1349,7 +1349,7 @@ function _putresources()
 
 function _putinfo()
 {
-	$dom = ZLanguage::getModuleDomain('iw_books');
+	$dom = ZLanguage::getModuleDomain('IWbooks');
 	$this->_out('/Producer '.$this->_textstring('FPDF '.__('Version', $dom)));
 	if(!empty($this->title))
 		$this->_out('/Title '.$this->_textstring($this->title));

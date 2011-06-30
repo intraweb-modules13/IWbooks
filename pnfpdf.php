@@ -31,7 +31,7 @@
 //     Funcions de generaci� de pdf del m�dul llibres
 // --------------------------------------------------------------------------
 
-require_once(ModUtil::getVar('iw_books', 'fpdf').'fpdf.php');
+require_once(ModUtil::getVar('IWbooks', 'fpdf').'fpdf.php');
 
 
 class PDF extends FPDF
@@ -73,20 +73,20 @@ class PDF extends FPDF
 	//Capçal de pàgina
 	function Header()
 	{
-	    $modid = ModUtil::getIdFromName('iw_main');
+	    $modid = ModUtil::getIdFromName('IWmain');
         $modinfo = ModUtil::getInfo($modid);
 	
-	    // Si variable 'encap' no té contingut o el mòdul iw_main no està actiu no apareixerà encapçalament
-        if(($modinfo['state'] != 3) ||(!is_null(ModUtil::getVar('iw_books', 'encap')))){
-			$imatge = ModUtil::getVar('iw_main', 'documentRoot').'/'.ModUtil::getVar('iw_books', 'encap');
-			if (file_exists($imatge) && (ModUtil::getVar('iw_books', 'encap') != '')){
+	    // Si variable 'encap' no té contingut o el mòdul IWmain no està actiu no apareixerà encapçalament
+        if(($modinfo['state'] != 3) ||(!is_null(ModUtil::getVar('IWbooks', 'encap')))){
+			$imatge = ModUtil::getVar('IWmain', 'documentRoot').'/'.ModUtil::getVar('IWbooks', 'encap');
+			if (file_exists($imatge) && (ModUtil::getVar('IWbooks', 'encap') != '')){
 			    $this->Image($imatge,8,6,180);
 			}		    
 	    }		
 		
-		//$this->Image(ModUtil::getVar('iw_books', 'encap'),8,6,180);
-		//$dir = ModUtil::getVar('iw_main', 'documentRoot')."/public/encap.jpg";
-		//$dir = ModUtil::getVar('iw_main', 'documentRoot').$imatge;
+		//$this->Image(ModUtil::getVar('IWbooks', 'encap'),8,6,180);
+		//$dir = ModUtil::getVar('IWmain', 'documentRoot')."/public/encap.jpg";
+		//$dir = ModUtil::getVar('IWmain', 'documentRoot').$imatge;
 		
 		
 		//Arial bold 15
@@ -97,7 +97,7 @@ class PDF extends FPDF
 		//Salt de línia
 		$this->Ln(30);
 
-		if (ModUtil::getVar('iw_books', 'marca_aigua') == 1)
+		if (ModUtil::getVar('IWbooks', 'marca_aigua') == 1)
 		{
 			// Fer marca d'aigua
 			$this->SetFont('Arial','B',50);
@@ -118,8 +118,8 @@ class PDF extends FPDF
 	//Peu de pàgina
 	function Footer()
 	{
-	    $dom = ZLanguage::getModuleDomain('iw_books');
-		$llegenda = ModUtil::apiFunc('iw_books', 'user', 'llistaplans');
+	    $dom = ZLanguage::getModuleDomain('IWbooks');
+		$llegenda = ModUtil::apiFunc('IWbooks', 'user', 'llistaplans');
 		$ample = $this->GetStringWidth($llegenda);
 
 		$this->SetY(-20);
@@ -139,10 +139,10 @@ class PDF extends FPDF
 /*
 function generapdf($args)
 {
-	require_once(ModUtil::getVar('iw_books', 'fpdf').'fpdf.php');
+	require_once(ModUtil::getVar('IWbooks', 'fpdf').'fpdf.php');
 
-	//    $dir = "modules/iw_books/tmp/";
-	$dir = ModUtil::getVar('iw_main', 'documentRoot')."/".ModUtil::getVar('iw_main', 'tempFolder')."/";
+	//    $dir = "modules/IWbooks/tmp/";
+	$dir = ModUtil::getVar('IWmain', 'documentRoot')."/".ModUtil::getVar('IWmain', 'tempFolder')."/";
 	// Netegem els fitxers temporals amb X segons d'antiguitat
 	NetejaFitxers($dir);
 
@@ -150,10 +150,10 @@ function generapdf($args)
 
 	extract($args);
 
-	$cursacad    = ModUtil::apiFunc('iw_books', 'user', 'cursacad', array('any' => $any));
-	$nivell_abre = ModUtil::apiFunc('iw_books', 'user', 'reble', array('nivell' => $nivell));
+	$cursacad    = ModUtil::apiFunc('IWbooks', 'user', 'cursacad', array('any' => $any));
+	$nivell_abre = ModUtil::apiFunc('IWbooks', 'user', 'reble', array('nivell' => $nivell));
 
-	$items = ModUtil::apiFunc('iw_books',
+	$items = ModUtil::apiFunc('IWbooks',
                           'user',
                           'getall',
 	array('startnum' => $startnum,
@@ -178,25 +178,25 @@ function generapdf($args)
 	$pdf->AddPage();
 
 
-	$alt       = ModUtil::getVar('iw_books', 'mida_font')/2; //5;
-	$salt      = ModUtil::getVar('iw_books', 'mida_font')/2; //5;
+	$alt       = ModUtil::getVar('IWbooks', 'mida_font')/2; //5;
+	$salt      = ModUtil::getVar('IWbooks', 'mida_font')/2; //5;
 	$fita_lect = 0;   // marca de t�tol llibres de lectura
 	$fita_opt  = 0;   // marca de t�tol llibres d'optativa
 	$fita_mat  = 0;   // marca de t�tol de materisls
 
 
-	$llis_mat  =  ModUtil::getVar('iw_books', 'llistar_materials');
-	$mida_font =  ModUtil::getVar('iw_books', 'mida_font');
+	$llis_mat  =  ModUtil::getVar('IWbooks', 'llistar_materials');
+	$mida_font =  ModUtil::getVar('IWbooks', 'mida_font');
 	$mida_font_tit = $mida_font+1;
 
 	if (count($items) == 0){
 		$pdf->Write($alt,__('There aren't books for your selection', $dom));// No hi ha llibres amb l'opció sol·licitada
 		$pdf->Output($file);
-		System::redirect(ModUtil::func('iw_books', 'user', 'getFile', array('fileName' => str_replace(ModUtil::getVar('iw_main', 'documentRoot')."/",'',$file))));
+		System::redirect(ModUtil::func('IWbooks', 'user', 'getFile', array('fileName' => str_replace(ModUtil::getVar('IWmain', 'documentRoot')."/",'',$file))));
 		return $file;
 	}
 
-	$mostra_pla = ModUtil::apiFunc('iw_books', 'user', 'descriplans', array('etapa' => $etapa));
+	$mostra_pla = ModUtil::apiFunc('IWbooks', 'user', 'descriplans', array('etapa' => $etapa));
 
 	$pdf->SetFont('Arial','B', 14);
 	//        "Llistat de llibres"
@@ -242,7 +242,7 @@ function generapdf($args)
 		if ($item['optativa'] == 1)
 		$optativa = _LLIBUSERMARCAOPT ;
 
-		$nommateria = utf8_decode(ModUtil::apiFunc('iw_books', 'user', 'nommateria', array('codi_mat' => $item['codi_mat'])));
+		$nommateria = utf8_decode(ModUtil::apiFunc('IWbooks', 'user', 'nommateria', array('codi_mat' => $item['codi_mat'])));
 
 		if ( substr($item['codi_mat'],0, 2) != "AA"){
 
@@ -322,7 +322,7 @@ function generapdf($args)
 	$pdf->Output($file);
 	$pdf->Output();
 
-	System::redirect(ModUtil::func('iw_books', 'user', 'getFile', array('fileName' => str_replace(ModUtil::getVar('iw_main', 'documentRoot')."/",'',$file))));
+	System::redirect(ModUtil::func('IWbooks', 'user', 'getFile', array('fileName' => str_replace(ModUtil::getVar('IWmain', 'documentRoot')."/",'',$file))));
 
 	return $file;
 }
@@ -331,15 +331,15 @@ function generapdf($args)
 // Llistats des d'administració
 function generapdfadmin($args)
 {
-    $dom = ZLanguage::getModuleDomain('iw_books');
-	require_once(ModUtil::getVar('iw_books', 'fpdf').'fpdf.php');
+    $dom = ZLanguage::getModuleDomain('IWbooks');
+	require_once(ModUtil::getVar('IWbooks', 'fpdf').'fpdf.php');
 	
 //	print_r($args);
 	
 	// directori amb fitxers temporals (ha de tenir perm�s d'escriptura))
-	       // $dir = "modules/iw_books/tmp/";
-	$dir = ModUtil::getVar('iw_main', 'documentRoot')."/".ModUtil::getVar('iw_main', 'tempFolder')."/";
-	$dir = ModUtil::getVar('iw_main', 'documentRoot')."/".ModUtil::getVar('iw_main', 'tempFolder')."/";
+	       // $dir = "modules/IWbooks/tmp/";
+	$dir = ModUtil::getVar('IWmain', 'documentRoot')."/".ModUtil::getVar('IWmain', 'tempFolder')."/";
+	$dir = ModUtil::getVar('IWmain', 'documentRoot')."/".ModUtil::getVar('IWmain', 'tempFolder')."/";
 	// mida de la lletra llibres
 	$mida = 9;
 
@@ -349,30 +349,30 @@ function generapdfadmin($args)
 	$file = $dir."tmp".date('h'.'m'.'s'.'d').".pdf";
 
 	extract($args);
-	$cursacad    = ModUtil::apiFunc('iw_books', 'user', 'cursacad', array('any' => $any));
+	$cursacad    = ModUtil::apiFunc('IWbooks', 'user', 'cursacad', array('any' => $any));
 	
 	if ($materia == 'TOT'){
 	    $nommateria = __('All subjects', $dom);
 	}else{
-	    $nommateria  = ModUtil::apiFunc('iw_books', 'user', 'nommateria', array('codi_mat' => $materia));    
+	    $nommateria  = ModUtil::apiFunc('IWbooks', 'user', 'nommateria', array('codi_mat' => $materia));    
 	}
 	
 	if ($nivell == ''){
 	    $nivell_abre = __('All courses', $dom);
 	}else{
-	    $nivell_abre = ModUtil::apiFunc('iw_books', 'user', 'reble', array('nivell' => $nivell));    
+	    $nivell_abre = ModUtil::apiFunc('IWbooks', 'user', 'reble', array('nivell' => $nivell));    
 	}
 	
 	if ($etapa == 'TOT'){
 	    $mostra_pla = __('All stages', $dom);    
 	}else{
-	     $mostra_pla = ModUtil::apiFunc('iw_books', 'user', 'descriplans', array('etapa' => $etapa));   
+	     $mostra_pla = ModUtil::apiFunc('IWbooks', 'user', 'descriplans', array('etapa' => $etapa));   
 	}
 
 	if ($materia == "TOT")
 	$mostra_codis = 1;
 
-	$items = ModUtil::apiFunc('iw_books',
+	$items = ModUtil::apiFunc('IWbooks',
                           'user',
                           'getall',
 	array('startnum' => $startnum,
@@ -401,7 +401,7 @@ function generapdfadmin($args)
 	if (count($items) == 0){
 		$pdf->Write($alt, utf8_decode(__('There aren\'t books for your selection', $dom)));
 		$pdf->Output($file);
-		System::redirect(ModUtil::func('iw_books', 'user', 'getFile', array('fileName' => str_replace(ModUtil::getVar('iw_main', 'documentRoot')."/",'',$file))));
+		System::redirect(ModUtil::func('IWbooks', 'user', 'getFile', array('fileName' => str_replace(ModUtil::getVar('IWmain', 'documentRoot')."/",'',$file))));
 		return $file;
 	}
 	$pdf->SetFillColor(230,230,230);
@@ -446,8 +446,8 @@ function generapdfadmin($args)
 		if ($item['optativa'] == 1)
 		$optativa =  utf8_decode(__('**', $dom)) ;
 
-		$nommateria = utf8_decode(ModUtil::apiFunc('iw_books', 'user', 'nommateria', array('codi_mat' => $item['codi_mat'])));
-		$nivell_abre = ModUtil::apiFunc('iw_books', 'user', 'reble', array('nivell' => $item['nivell']));
+		$nommateria = utf8_decode(ModUtil::apiFunc('IWbooks', 'user', 'nommateria', array('codi_mat' => $item['codi_mat'])));
+		$nivell_abre = ModUtil::apiFunc('IWbooks', 'user', 'reble', array('nivell' => $item['nivell']));
 		$pdf->SetFont('Arial','B',$mida);
 
 
@@ -500,7 +500,7 @@ function generapdfadmin($args)
 	}
 
 	$fita_mat = 0;
-	$llis_mat = ModUtil::getVar('iw_books', 'llistar_materials');
+	$llis_mat = ModUtil::getVar('IWbooks', 'llistar_materials');
 
 	foreach($amaterials as $row){
 		if ($llis_mat == "1"){
@@ -514,7 +514,7 @@ function generapdfadmin($args)
 			}
 
 			$pdf->SetFont('Arial','B',$mida);
-			$nivell_abre = ModUtil::apiFunc('iw_books', 'user', 'reble', array('nivell' => $row[nivell]));
+			$nivell_abre = ModUtil::apiFunc('IWbooks', 'user', 'reble', array('nivell' => $row[nivell]));
 			$pdf->Write($alt,chr(149)." ".$row[optativa]." ".$nivell_abre." ".$row[etapa]." - ".$row[nom_mat]);
 			$pdf->Ln(6);
 			$pdf->SetFont('Arial','',$mida);
@@ -529,7 +529,7 @@ function generapdfadmin($args)
 
 	$pdf->Output($file);
 
-	System::redirect(ModUtil::func('iw_books', 'user', 'getFile', array('fileName' => str_replace(ModUtil::getVar('iw_main', 'documentRoot')."/",'',$file))));
+	System::redirect(ModUtil::func('IWbooks', 'user', 'getFile', array('fileName' => str_replace(ModUtil::getVar('IWmain', 'documentRoot')."/",'',$file))));
 
 //    System::redirect($file);
     

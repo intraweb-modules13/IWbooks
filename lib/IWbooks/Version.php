@@ -7,7 +7,7 @@ class IWbooks_Version extends Zikula_AbstractVersion
         $meta['description'] = $this->__("Llibres de text, lectures i materials");
         $meta['url'] = $this->__("IWbooks");
         $meta['version'] = '3.0.0';
-        $meta['securityschema'] = array('iw_books::Item' => 'iw_books item name::iw_books item ID');
+        $meta['securityschema'] = array('IWbooks::Item' => 'IWbooks item name::IWbooks item ID');
         /*
         $meta['dependencies'] = array(array('modname' => 'IWmain',
                                             'minversion' => '3.0.0',

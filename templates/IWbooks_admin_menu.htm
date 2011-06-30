@@ -1,7 +1,6 @@
-{admincategorymenu}
-<div class="pn-adminbox">
+{insert name="getstatusmsg"}
 <h1>{gt text="Textbooks and lectures"}</h1>
-<div class="pn-menu">
-{iw_booksadminlinks}
-</div>
-</div>
+{if not isset($id)}
+{assign var=id value=0}
+{/if}
+{modulelinks modname='IWbooks' type='user' fid=$id}

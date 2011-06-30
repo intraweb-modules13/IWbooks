@@ -1,27 +1,27 @@
-{include file="iw_books_user_menu.htm"}
+{include file="IWbooks_user_menu.htm"}
 
 <div class="pn-menu">
 
 
 	
 	
-<form id="filtra" action="{modurl modname="iw_books" type="user" func="view"}" method="post" enctype="application/x-www-form-urlencoded">
+<form id="filtra" action="{modurl modname="IWbooks" type="user" func="view"}" method="post" enctype="application/x-www-form-urlencoded">
 <div style="text-align:center;">
-	 <fieldset class="iw_books-fieldset">
+	 <fieldset class="IWbooks-fieldset">
 	 	<legend>{gt text="Options filter"}</legend>
-		<label for="iw_books_any">{gt text="Try course:"}</label>
-	 		<select id="iw_books_curs"  name="curs">{html_options options=$aanys selected=$cursselec}</select>&nbsp;
-		<label for="iw_books_pla">{gt text="Plan:"}</label>
-	 		<select id="iw_books_pla"  name="etapa">{html_options options=$aplans selected=$etapaselec}</select>&nbsp;
-	 	<label for="iw_books_nivell">{gt text="Level:"}</label>
-	 		<select id="iw_books_nivell"  name="nivell">{html_options options=$anivells selected=$nivellselec}</select>&nbsp;
-	 	<label for="iw_books_materia">{gt text="Subject:"}</label>
-	 		<select id="iw_books_materia"  name="materia">{html_options options=$amateries selected=$materiaselec}</select>&nbsp;
-		<label for="iw_books_lectura">{gt text="Reads:"}</label>
+		<label for="IWbooks_any">{gt text="Try course:"}</label>
+	 		<select id="IWbooks_curs"  name="curs">{html_options options=$aanys selected=$cursselec}</select>&nbsp;
+		<label for="IWbooks_pla">{gt text="Plan:"}</label>
+	 		<select id="IWbooks_pla"  name="etapa">{html_options options=$aplans selected=$etapaselec}</select>&nbsp;
+	 	<label for="IWbooks_nivell">{gt text="Level:"}</label>
+	 		<select id="IWbooks_nivell"  name="nivell">{html_options options=$anivells selected=$nivellselec}</select>&nbsp;
+	 	<label for="IWbooks_materia">{gt text="Subject:"}</label>
+	 		<select id="IWbooks_materia"  name="materia">{html_options options=$amateries selected=$materiaselec}</select>&nbsp;
+		<label for="IWbooks_lectura">{gt text="Reads:"}</label>
 		{if $lecturaselec eq 1}
-			<input id="iw_books_lectura" name="lectura" type="checkbox" value="1" checked="checked" />
+			<input id="IWbooks_lectura" name="lectura" type="checkbox" value="1" checked="checked" />
 		{else}
-			<input id="iw_books_lectura" name="lectura" type="checkbox" value="1" />
+			<input id="IWbooks_lectura" name="lectura" type="checkbox" value="1" />
 		{/if}
   		<br><br><input name="submit" type="submit" value="{gt text="Filter"}" />
  	</fieldset>
@@ -32,7 +32,7 @@
 
 {if ($mostra eq "1" )}
 <h2>{gt text="List of Textbooks"} {if ($lectura eq "1" )} {gt text="and reading"} {/if} · {gt text="Course"} {$cursacad}  {$mostra_pla} {$nivell_abre} {$mostra_mat}</h2>
-<form id="filtra" action="{modurl modname="iw_books" type="user" func="view"}" method="post" enctype="application/x-www-form-urlencoded">
+<form id="filtra" action="{modurl modname="IWbooks" type="user" func="view"}" method="post" enctype="application/x-www-form-urlencoded">
 	<input type="hidden" name="curs" value="{$cursselec}" />
 	<input type="hidden" name="etapa" value="{$etapaselec}" />
 	<input type="hidden" name="nivell" value="{$nivellselec}" />
@@ -45,7 +45,7 @@
 
 	<div style="padding-bottom:10px; float:right;">
 		<input name="pdf" type="submit" value="{gt text="Crea llistat PDF"}" />
-		<img src="modules/iw_books/pnimages/pdf.gif" style="width:25px;vertical-align:bottom;" />
+		<img src="modules/IWbooks/pnimages/pdf.gif" style="width:25px;vertical-align:bottom;" />
 	</div>		
 </form>
 
@@ -61,16 +61,16 @@
 	<th>{gt text="Eval."}</th>
   </thead>
 
-  {section name="iw_booksitems" loop=$iw_booksitems}  
+  {section name="IWbooksitems" loop=$IWbooksitems}  
     <tr class="{cycle values=pn-odd,pn-even}">
-    	<td>{$iw_booksitems[iw_booksitems].codi_mat|safehtml}</td>
-		<td>{$iw_booksitems[iw_booksitems].autor|safehtml}</td>
-    	<td>{$iw_booksitems[iw_booksitems].titol|safehtml}</td>
-		<td>{$iw_booksitems[iw_booksitems].editorial|safehtml}</td>
-		<td>{$iw_booksitems[iw_booksitems].nivell|safehtml}</td>
-		<td>{$iw_booksitems[iw_booksitems].optativa|safehtml}</td>
-		<td>{$iw_booksitems[iw_booksitems].lectura|safehtml}</td>
-		<td>{$iw_booksitems[iw_booksitems].avaluacio|safehtml}</td>
+    	<td>{$IWbooksitems[IWbooksitems].codi_mat|safehtml}</td>
+		<td>{$IWbooksitems[IWbooksitems].autor|safehtml}</td>
+    	<td>{$IWbooksitems[IWbooksitems].titol|safehtml}</td>
+		<td>{$IWbooksitems[IWbooksitems].editorial|safehtml}</td>
+		<td>{$IWbooksitems[IWbooksitems].nivell|safehtml}</td>
+		<td>{$IWbooksitems[IWbooksitems].optativa|safehtml}</td>
+		<td>{$IWbooksitems[IWbooksitems].lectura|safehtml}</td>
+		<td>{$IWbooksitems[IWbooksitems].avaluacio|safehtml}</td>
 		{strip}
         {section name=options loop=$options}
 	    <a href="{$options[options].url|safetext}" title="{gt text="$options[options].descrip"}">{gt text="$options[options].title"}</a>
