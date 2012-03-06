@@ -2,11 +2,11 @@
 
 function IWbooks_tables() {
     // Initialise table array
-    $pntable = array();
+    $table = array();
 
-    $pntable['IWbooks'] = DBUtil::getLimitedTablename('IWbooks');
+    $table['IWbooks'] = DBUtil::getLimitedTablename('IWbooks');
 
-    $pntable['IWbooks_column'] = array(
+    $table['IWbooks_column'] = array(
         'tid' => 'pn_tid',
         'autor' => 'pn_autor',
         'titol' => 'pn_titol',
@@ -24,7 +24,7 @@ function IWbooks_tables() {
         'materials' => 'pn_materials'
     );
 
-    $pntable['IWbooks_column_def'] = array(
+    $table['IWbooks_column_def'] = array(
         'tid' => "I NOTNULL AUTO PRIMARY",
         'autor' => "C(50) NOT NULL DEFAULT ''",
         'titol' => "C(50) NOT NULL DEFAULT ''",
@@ -42,28 +42,27 @@ function IWbooks_tables() {
         'materials' => "X NOT NULL"
     );
 
-    $pntable['IWbooks_column_idx'] = array('tid' => 'tid');
+    $table['IWbooks_column_idx'] = array('tid' => 'tid');
 
-    ObjectUtil::addStandardFieldsToTableDefinition($pntable['IWbooks_column'], 'pn_');
-    ObjectUtil::addStandardFieldsToTableDataDefinition($pntable['IWbooks_column_def'], 'pn_');
+    ObjectUtil::addStandardFieldsToTableDefinition($table['IWbooks_column'], 'pn_');
+    ObjectUtil::addStandardFieldsToTableDataDefinition($table['IWbooks_column_def'], 'pn_');
 
 
-    $pntable['IWbooks_materies'] = DBUtil::getLimitedTablename('IWbooks_materies');
-    $pntable['IWbooks_materies_column'] = array(
+    $table['IWbooks_materies'] = DBUtil::getLimitedTablename('IWbooks_materies');
+    $table['IWbooks_materies_column'] = array(
         'tid' => 'pn_tid',
         'codi_mat' => 'pn_codi_mat',
         'materia' => 'pn_materia'
     );
 
-    $pntable['IWbooks_materies_column_def'] = array(
+    $table['IWbooks_materies_column_def'] = array(
         'tid' => "I NOTNULL AUTO PRIMARY",
         'codi_mat' => "C(3) NOT NULL default ''",
         'materia' => "C(50) NOT NULL default ''"
     );
 
-    ObjectUtil::addStandardFieldsToTableDefinition($pntable['IWbooks_materies_column'], 'pn_');
-    ObjectUtil::addStandardFieldsToTableDataDefinition($pntable['IWbooks_materies_column_def'], 'pn_');
+    ObjectUtil::addStandardFieldsToTableDefinition($table['IWbooks_materies_column'], 'pn_');
+    ObjectUtil::addStandardFieldsToTableDataDefinition($table['IWbooks_materies_column_def'], 'pn_');
 
-
-    return $pntable;
+    return $table;
 }

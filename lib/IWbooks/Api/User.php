@@ -2,7 +2,6 @@
 class IWbooks_Api_User extends Zikula_AbstractApi {
 
     public function getall($args) {
-        $dom = ZLanguage::getModuleDomain('IWbooks');
         $table = DBUtil::getTables();
         $c = $table['IWbooks_column'];
 
@@ -18,7 +17,7 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
 
         if ((!isset($args['startnum'])) ||
                 (!isset($args['numitems']))) {
-            return LogUtil::registerError(__('Error! Could not do what you wanted. Please check your input.', $dom));
+            return LogUtil::registerError($this->__('Error! Could not do what you wanted. Please check your input.'));
         }
 
         $items = array();
@@ -53,11 +52,10 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
     }
 
     public function get($args) {
-        $dom = ZLanguage::getModuleDomain('IWbooks');
         extract($args);
 
         if (!isset($args['tid']) || !is_numeric($args['tid'])) {
-            return LogUtil::registerError(__('Error! Could not do what you wanted. Please check your input.', $dom));
+            return LogUtil::registerError($this->__('Error! Could not do what you wanted. Please check your input.'));
         }
 
         $permFilter = array();
@@ -151,7 +149,6 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
 // Torna un array amb 'codi_mat' i 'materia'
 // L'utilitzem per crear el selector múltiple de tria de matèria
     public function materies($args) {
-        $dom = ZLanguage::getModuleDomain('IWbooks');
         extract($args);
 
         //$dbconn =& DBConnectionStack::getConnection*(true);
@@ -171,18 +168,15 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
             $items['TOT'] = 'Totes';
         }
 
-        $sql = "SELECT $materiescolumn[tid],
-	$materiescolumn[codi_mat],
-	$materiescolumn[materia]
-              FROM $materiestable " .
-                $sql_nou . "
-          ORDER BY $materiescolumn[materia]";
+        $sql = "SELECT $materiescolumn[tid], $materiescolumn[codi_mat],	$materiescolumn[materia] FROM $materiestable " .
+                $sql_nou . 
+                "ORDER BY $materiescolumn[materia]";
 
         $result = & $dbconn->Execute($sql);
 
         if ($dbconn->ErrorNo() != 0) {
             //SessionUtil::setVar('errormsg', $sql. __('Error! Could not load items.', $dom));
-            SessionUtil::setVar('errormsg', __('Error! Could not load items.', $dom));
+            SessionUtil::setVar('errormsg', $this->__('Error! Could not load items.'));
             return false;
         }
 
@@ -225,7 +219,6 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
     }
 
     public function getall_mat($args) {
-        $dom = ZLanguage::getModuleDomain('IWbooks');
         extract($args);
 
         // Optional arguments.
@@ -238,7 +231,7 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
 
         if ((!isset($startnum)) ||
                 (!isset($numitems))) {
-            SessionUtil::setVar('errormsg', __('Error! Could not do what you wanted. Please check your input.', $dom));
+            SessionUtil::setVar('errormsg', $this->__('Error! Could not do what you wanted. Please check your input.'));
             return false;
         }
 
@@ -264,7 +257,7 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
 
         if ($dbconn->ErrorNo() != 0) {
             //SessionUtil::setVar('errormsg'.$sql, __('Error! Could not load items.', $dom));
-            SessionUtil::setVar('errormsg', __('Error! Could not load items.', $dom));
+            SessionUtil::setVar('errormsg', $this->__('Error! Could not load items.'));
             return false;
         }
 
@@ -283,11 +276,10 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
     }
 
     public function get_mat($args) {
-        $dom = ZLanguage::getModuleDomain('IWbooks');
         extract($args);
 
         if (!isset($args['tid']) || !is_numeric($args['tid'])) {
-            return LogUtil::registerError(__('Error! Could not do what you wanted. Please check your input.', $dom));
+            return LogUtil::registerError($this->__('Error! Could not do what you wanted. Please check your input.'));
         }
 
         $permFilter = array();
@@ -385,33 +377,6 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
         return $data;
     }
 
-    /*
-      public function nivells($args)
-
-      {
-      extract($args);
-     */
-    /*
-      if (!isset($blanc)) {
-      $blanc = 0;
-      }
-      if ($blanc == 1){
-      $data[''] =  '---' ;
-      }
-     *//*
-      if (isset($blanc) and $blanc == true) {
-      $data[''] =  '---' ;
-      }
-
-      $darrer_nivell = ModUtil::getVar('IWbooks', 'darrer_nivell');
-
-      for ($i=1; $i<=$darrer_nivell ; $i++){
-      $data[$i] = ModUtil::apiFunc('IWbooks', 'user', 'reble', array('nivell' => $i)) ;
-      }
-
-      return $data;
-      } */
-
     public function nivells($args) {
         extract($args);
 
@@ -472,9 +437,6 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
 
         $sql = "SELECT DISTINCT $llibrescolumn[any]
             FROM $llibrestable";
-
-        $result = & $dbconn->Execute($sql);
-
 
         if ($dbconn->ErrorNo() != 0) {
             SessionUtil::setVar('errormsg', 'error');
