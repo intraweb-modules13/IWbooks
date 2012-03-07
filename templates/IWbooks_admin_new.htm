@@ -30,7 +30,9 @@
                 </div>
                 <div class="z-formrow">
                     <label for="IWbooks_codi_mat">{gt text="Subject"}</label>
-                    <select id="IWbooks_materia"  name="item[codi_mat]">{html_options options=$amateries}</select>
+                    <select id="IWbooks_materia"  name="item[codi_mat]">
+                        {html_options options=$amateries}
+                    </select>
                 </div>
                 <div class="z-formrow">
                     <label for="IWbooks_any">{gt text="Academic Year"}</label>
@@ -38,11 +40,15 @@
                 </div>
                 <div class="z-formrow">
                     <label for="IWbooks_codi_etapa">{gt text="Plan (Key 'Ctrl' for choose more plans)"}</label>
-                    <select id="IWbooks_etapa" name="item[etapa][]" multiple size="6">{html_options options=$aplans selected=$plaselec}</select>
+                    <select id="IWbooks_etapa" name="item[etapa][]" multiple size="6">
+                        {html_options options=$aplans selected=$plaselec}
+                    </select>
                 </div>
                 <div class="z-formrow">
                     <label for="IWbooks_nivell">{gt text="Level"}</label>
-                    <select id="IWbooks_nivell"  name="item[nivell]">{html_options options=$anivells selected=$nivellselec}</select>
+                    <select id="IWbooks_nivell"  name="item[nivell]">
+                        {html_options options=$anivells selected=$nivellselec}
+                    </select>
                 </div>
                 <div class="z-formrow">
                     <label for="IWbooks_optativa">{gt text="Optional?"}</label>
@@ -62,7 +68,9 @@
                 </div>
                 <div class="z-formrow">
                     <label for="IWbooks_avaluacio">{gt text="Evaluation (Read Only)"}</label>
-                    <select id="IWbooks_avaluacio"  name="item[avaluacio]">{html_options options=$avaluacions selected=$avaluacioselec}</select>
+                    <select id="IWbooks_avaluacio"  name="item[avaluacio]">
+                        {html_options options=$avaluacions selected=$avaluacioselec}
+                    </select>
                 </div>
                 <div class="z-formrow">
                     <label for="IWbooks_observacions">{gt text="Comment"}</label>
@@ -75,15 +83,15 @@
             </fieldset>
             <div class="z-center">
                 <span class="z-buttons">
-                    <a href="javascript:document['IWbook'].submit();">
+                    <a href="javascript:document.forms['IWbook'].submit();">
                         {img modname='core' src='button_ok.png' set='icons/small' __alt="Create" __title="Create"}
-                        gt text="Create">
+                        {gt text="Create"}
                     </a>
                 </span>
                 <span class="z-buttons">
                     <a href="{modurl modname=IWbooks type=admin func=view}">
                         {img modname='core' src='button_cancel.png' set='icons/small' __alt="Cancel" __title="Cancel"}
-                        gt text="Cancel">
+                        {gt text="Cancel"}
                     </a>
                 </span>
             </div>

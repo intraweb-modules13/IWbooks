@@ -1,4 +1,5 @@
 <?php
+
 class IWbooks_Api_User extends Zikula_AbstractApi {
 
     public function getall($args) {
@@ -24,26 +25,23 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
 
         // Security check
         if (!SecurityUtil::checkPermission('IWbooks::', '::', ACCESS_READ)) {
-            return $items;
+            throw new Zikula_Exception_Forbidden();
         }
 
         // We now generate a where-clause
-        $sql = ($any) ? " WHERE " . $c[any] . " = '$any' " : " WHERE " . $c[any] . " = '1'";
+        $sql = ($any) ? " WHERE " . $c['any'] . " = '$any' " : " WHERE " . $c['any'] . " = '1'";
         if ($materia != "TOT")
-            $sql .= " AND " . $c[codi_mat] . " = '$materia' ";
+            $sql .= " AND " . $c['codi_mat'] . " = '$materia' ";
         if ($lectura != '1')
-            $sql .= " AND " . $c[lectura] . " != 1 ";
+            $sql .= " AND " . $c['lectura'] . " != 1 ";
         if ($etapa != "TOT")
-            $sql .= " AND " . $c[etapa] . " LIKE '%$etapa%'";
-        if ($materia != "TOT")
-            $sql .= " AND " . $c[codi_mat] . " = '$materia'";
+            $sql .= " AND " . $c['etapa'] . " LIKE '%$etapa%'";
         if ($nivell != "")
-            $sql .= " AND (" . $c[nivell] . " = '$nivell' OR " . $c[nivell] . " = '')";
+            $sql .= " AND (" . $c['nivell'] . " = '$nivell' OR " . $c['nivell'] . " = '')";
 
         $where = $sql;
 
-        //$orderBy = 'any, optativa, lectura, codi_mat, etapa DESC, nivell, avaluacio ' );
-        $orderBy = ' ' . $c[any] . ', ' . $c[optativa] . ', ' . $c[lectura] . ', ' . $c[codi_mat] . ', ' . $c[etapa] . ' DESC, ' . $c[nivell] . ', ' . $c[avaluacio] . ' ';
+        $orderBy = ' ' . $c['any'] . ', ' . $c['optativa'] . ', ' . $c['lectura'] . ', ' . $c['codi_mat'] . ', ' . $c['etapa'] . ' DESC, ' . $c['nivell'] . ', ' . $c['avaluacio'] . ' ';
 
         $items = DBUtil::selectObjectArray('IWbooks', $where, $orderBy, $args['startnum'], $args['numitems']);
 
@@ -92,28 +90,28 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
 
         $sql_eta = "";
         if ($etapa != "TOT")
-            $sql_eta = " and " . $c[etapa] . "  LIKE '%$etapa%' ";
+            $sql_eta = " and " . $c['etapa'] . "  LIKE '%$etapa%' ";
 
         $sql_mat = "";
         if ($materia != "TOT")
-            $sql_mat = " and " . $c[codi_mat] . " = '$materia' ";
+            $sql_mat = " and " . $c['codi_mat'] . " = '$materia' ";
 
 
         $sql_lect = "";
         if ($lectura == 1) {
             $sql_lect = "";
         } else {
-            $sql_lect = " and " . $c[lectura] . " != 1 ";
+            $sql_lect = " and " . $c['lectura'] . " != 1 ";
         }
 
-        if ($flag == 'admin')
+        if (isset($flag) && $flag == 'admin')
             $sql_lect = "";
 
         $sql_niv = "";
         if ($nivell != "")
-            $sql_niv = " and " . $c[nivell] . " = '$nivell'";
+            $sql_niv = " and " . $c['nivell'] . " = '$nivell'";
 
-        $sql = " " . $c[any] . " = '$any' "
+        $sql = " " . $c['any'] . " = '$any' "
                 . $sql_eta . $sql_niv . $sql_mat . $sql_lect;
 
         $where = $sql;
@@ -151,41 +149,26 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
     public function materies($args) {
         extract($args);
 
-        //$dbconn =& DBConnectionStack::getConnection*(true);
-        $table = & DBUtil::getTables();
+        $table = DBUtil::getTables();
 
         $materiestable = $table['IWbooks_materies'];
         $materiescolumn = &$table['IWbooks_materies_column'];
 
         $items = array();
-        $sql_nou = "";
+        $where = "";
         if (isset($nou) and $nou == 1) {
             $items[''] = '---------';
-            $sql_nou = "WHERE $materiescolumn[codi_mat] != 'TOT'";
+            $where = "$materiescolumn[codi_mat] != 'TOT'";
         }
 
         if (isset($tots) and $tots == true) {
             $items['TOT'] = 'Totes';
         }
 
-        $sql = "SELECT $materiescolumn[tid], $materiescolumn[codi_mat],	$materiescolumn[materia] FROM $materiestable " .
-                $sql_nou . 
-                "ORDER BY $materiescolumn[materia]";
+        $orderby = "$materiescolumn[materia]";
 
-        $result = & $dbconn->Execute($sql);
+        $items = DBUtil::selectObjectArray('IWbooks_materies', $where, $orderby, '-1', '-1');
 
-        if ($dbconn->ErrorNo() != 0) {
-            //SessionUtil::setVar('errormsg', $sql. __('Error! Could not load items.', $dom));
-            SessionUtil::setVar('errormsg', $this->__('Error! Could not load items.'));
-            return false;
-        }
-
-        for (; !$result->EOF; $result->MoveNext()) {
-            list($tid, $codi_mat, $materia) = $result->fields;
-            $items[$codi_mat] = $materia;
-        }
-
-        $result->Close();
         return $items;
     }
 
@@ -196,31 +179,19 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
     public function nommateria($args) {
         extract($args);
 
-        //$dbconn =& DBConnectionStack::getConnection*(true);
-        $table = & DBUtil::getTables();
+        $table = DBUtil::getTables();
 
-        $materiestable = $table['IWbooks_materies'];
-        $materiescolumn = &$table['IWbooks_materies_column'];
+        $c = &$table['IWbooks_materies_column'];
 
-        $sql = "SELECT $materiescolumn[materia]
-              FROM $materiestable
-             WHERE $materiescolumn[codi_mat] = '$codi_mat'";
+        $where = "$c[codi_mat] = '$codi_mat'";
 
-        $result = &$dbconn->Execute($sql);
+        $item = DBUtil::selectObject('IWbooks_materies', $where);
 
-        if (!$result->EOF) {
-            list($materia) = $result->fields;
-            $torna = $materia;
-        }
-
-        $result->Close();
-
-        return $torna;
+        return $item['codi_mat'];
     }
 
     public function getall_mat($args) {
         extract($args);
-
         // Optional arguments.
         if (!isset($startnum)) {
             $startnum = 1;
@@ -228,50 +199,28 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
         if (!isset($numitems)) {
             $numitems = -1;
         }
-
-        if ((!isset($startnum)) ||
-                (!isset($numitems))) {
-            SessionUtil::setVar('errormsg', $this->__('Error! Could not do what you wanted. Please check your input.'));
-            return false;
+        if (!isset($startnum) || !isset($numitems)) {
+            return LogUtil::registerError($this->__('Error! Could not do what you wanted. Please check your input.'));
         }
-
         $items = array();
 
         if (!SecurityUtil::checkPermission('IWbooks::', '::', ACCESS_READ)) {
-            return $items;
+            throw new Zikula_Exception_Forbidden();
         }
 
-        //$dbconn =& DBConnectionStack::getConnection*(true);
-        $table = & DBUtil::getTables();
+        $table = DBUtil::getTables();
 
         $materiestable = $table['IWbooks_materies'];
-        $materiescolumn = &$table['IWbooks_materies_column'];
+        $c = &$table['IWbooks_materies_column'];
 
-        $sql = "SELECT $materiescolumn[tid],
-	$materiescolumn[codi_mat],
-	$materiescolumn[materia]
-            FROM $materiestable 
-            ORDER BY $materiescolumn[codi_mat]";
+        $where = '';
+        $orderby = "$c[codi_mat]";
 
-        $result = $dbconn->SelectLimit($sql, $numitems, $startnum - 1);
+        $items = DBUtil::selectObjectArray('IWbooks_materies', $where, $orderby, $numitems, $startnum - 1);
 
-        if ($dbconn->ErrorNo() != 0) {
-            //SessionUtil::setVar('errormsg'.$sql, __('Error! Could not load items.', $dom));
-            SessionUtil::setVar('errormsg', $this->__('Error! Could not load items.'));
-            return false;
+        if ($items === false) {
+            return LogUtil::registerError($this->__('Error! Could not load items.'));
         }
-
-        for (; !$result->EOF; $result->MoveNext()) {
-            list($tid, $codi_mat, $materia, $optativa, $gestor) = $result->fields;
-            if (SecurityUtil::checkPermission('IWbooks::', "$autor::$tid", ACCESS_READ)) {
-                $items[] = array('tid' => $tid,
-                    'codi_mat' => $codi_mat,
-                    'materia' => $materia);
-            }
-        }
-
-        $result->Close();
-
         return $items;
     }
 
@@ -293,6 +242,10 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
             'level' => ACCESS_EDIT);
 
         $item = DBUtil::selectObjectByID('IWbooks_materies', $args['tid'], 'tid', null);
+
+        if ($item === false) {
+            return LogUtil::registerError($this->__('Error! Could not load items.'));
+        }
 
         // Return the item array
         return $item;
@@ -426,30 +379,20 @@ class IWbooks_Api_User extends Zikula_AbstractApi {
      */
 
     public function anys($args) {
-
         extract($args);
+        $data = array();
+        $table = DBUtil::getTables();
 
-        //$dbconn =& DBConnectionStack::getConnection*(true);
-        $table = & DBUtil::getTables();
+        $items = DBUtil::selectObjectArray('IWbooks', '', '', '-1', '-1');
 
-        $llibrestable = $table['IWbooks'];
-        $llibrescolumn = &$table['IWbooks_column'];
-
-        $sql = "SELECT DISTINCT $llibrescolumn[any]
-            FROM $llibrestable";
-
-        if ($dbconn->ErrorNo() != 0) {
-            SessionUtil::setVar('errormsg', 'error');
-            return false;
+        if ($items === false) {
+            return LogUtil::registerError($this->__('Error! Could not load items.'));
         }
 
-        for (; !$result->EOF; $result->MoveNext()) {
-            list($anytria) = $result->fields;
-            $cursacad = ModUtil::apiFunc('IWbooks', 'user', 'cursacad', array('any' => $anytria));
-            $data[trim($anytria)] = $cursacad;
+        foreach ($items as $item) {
+            $cursacad = ModUtil::apiFunc('IWbooks', 'user', 'cursacad', array('any' => $item['any']));
+            $data[trim($item['any'])] = $cursacad;
         }
-
-        $result->Close();
 
         return $data;
     }

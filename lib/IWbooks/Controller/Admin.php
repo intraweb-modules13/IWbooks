@@ -8,20 +8,24 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
 
     public function main() {
         if (!SecurityUtil::checkPermission('IWbooks::', '::', ACCESS_EDIT)) {
-            return LogUtil::registerPermissionError();
+            throw new Zikula_Exception_Forbidden();
         }
-        $view = Zikula_View::getInstance('IWbooks');
-        return $view->fetch('IWbooks_admin_main.htm');
+
+        return $this->view->fetch('IWbooks_admin_main.htm');
     }
 
     public function newItem() {
         // Security check
         if (!SecurityUtil::checkPermission('IWbooks::', "::", ACCESS_READ)) {
-            return LogUtil::registerError($this->__('Sorry! No authorization to access this module.'), 403);
+            throw new Zikula_Exception_Forbidden();
         }
         $aplans = ModUtil::apiFunc('IWbooks', 'user', 'plans', array('tots' => false));
         $anivells = ModUtil::apiFunc('IWbooks', 'user', 'nivells', array('blanc' => true));
-        $amateries = ModUtil::apiFunc('IWbooks', 'user', 'materies', array('nou' => 1));
+        $materies = ModUtil::apiFunc('IWbooks', 'user', 'materies', array('nou' => 1));
+        $amateries = array('' => '---------');
+        foreach ($materies as $materia) {
+            $amateries[$materia['codi_mat']] = $materia['materia'];
+        }
         $avaluacions = array('' => '---',
             '1' => '1a',
             '2' => '2a',
@@ -31,6 +35,19 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
                         ->assign('anivells', $anivells)
                         ->assign('amateries', $amateries)
                         ->assign('avaluacions', $avaluacions)
+                        ->assign('autor', '')
+                        ->assign('titol', '')
+                        ->assign('editorial', '')
+                        ->assign('any_publi', '')
+                        ->assign('isbn', '')
+                        ->assign('anyini', '')
+                        ->assign('plaselec', '')
+                        ->assign('nivellselec', '')
+                        ->assign('optativa', '')
+                        ->assign('lectura', '')
+                        ->assign('avaluacioselec', '')
+                        ->assign('observacions', '')
+                        ->assign('materials', '')
                         ->fetch('IWbooks_admin_new.htm');
     }
 
@@ -43,13 +60,13 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
         $tid = ModUtil::apiFunc('IWbooks', 'admin', 'create', array('name' => $name, 'number' => $number));
         if ($tid != false) {
             // Success
-            SessionUtil::setVar('statusmsg', $this->__('The new book has been created') . $codi_mat);
+            LogUtil::registerStatus($this->__('The new book has been created') . $codi_mat);
         }
         return System::redirect(ModUtil::url('IWbooks', 'admin', 'view'));
     }
 
     public function modify($args) {
-        $tid = (int) FormUtil::getPassedValue('tid');
+        $tid = FormUtil::getPassedValue('tid', isset($args['tid']) ? $args['tid'] : null, 'GETPOST');
         $objectid = (int) FormUtil::getPassedValue('objectid');
 
         if (!empty($objectid))
@@ -60,12 +77,20 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
             return LogUtil::registerError($this->__('No such item found.'), 404);
         }
         if (!SecurityUtil::checkPermission('IWbooks::', '::', ACCESS_ADD)) {
-            return LogUtil::registerPermissionError();
+            throw new Zikula_Exception_Forbidden();
         }
 
         $aplans = ModUtil::apiFunc('IWbooks', 'user', 'plans', array('tots' => false));
         $anivells = ModUtil::apiFunc('IWbooks', 'user', 'nivells', array('blanc' => true));
         $amateries = ModUtil::apiFunc('IWbooks', 'user', 'materies', array('nou' => 1));
+
+        $materies = ModUtil::apiFunc('IWbooks', 'user', 'materies', array('tots' => true));
+
+        $amateries = array('' => $this->__('---------'));
+        foreach ($materies as $materia1) {
+            $amateries[$materia1['codi_mat']] = $materia1['materia'];
+        }
+
         $separa = explode("|", $item['etapa']);
         $aavaluacions = array('' => '---',
             '1' => '1a',
@@ -81,11 +106,12 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
                         ->assign('aavaluacions', $aavaluacions)
                         ->assign('avaluacioselec', $item['avaluacio'])
                         ->assign('item', $item)
+                        ->assign('copia', 0)
                         ->fetch('IWbooks_admin_modify.htm');
     }
 
     public function update($args) {
-        $item = FormUtil::getPassedValue('item');
+        $item = FormUtil::getPassedValue('item', isset($args['item']) ? $args['item'] : null, 'POST');
         if (isset($args['objectid']) && !empty($args['objectid'])) {
             $item['tid'] = $args['objectid'];
         }
@@ -100,58 +126,35 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
 
     // Esborrar un element
     public function delete($args) {
-        list($tid,
-                $objectid,
-                $confirmation,
-                $titol) = FormUtil::getPassedValue('tid', 'objectid', 'confirmation', 'titol');
-
-        extract($args);
-        if (!empty($objectid))
-            $tid = $objectid;
-
-        // Load API.  Note that this is loading the user API, that is because the
-        if (!ModUtil::loadApi('IWbooks', 'user')) {
-            $output->Text($this->__('Error! Could not load module.'));
-            return $output->GetOutput();
-        }
+        $tid = FormUtil::getPassedValue('tid', isset($args['tid']) ? $args['tid'] : null, 'GETPOST');
+        $confirmation = FormUtil::getPassedValue('confirmation', isset($args['confirmation']) ? $args['confirmation'] : null, 'POST');
 
         // The user API function is called.  This takes the item ID which we
         $item = ModUtil::apiFunc('IWbooks', 'user', 'get', array('tid' => $tid));
 
         if ($item == false) {
-            $output->Text(_LLIBRESNOSUCHITEM);
-            return $output->GetOutput();
+            LogUtil::registerError($this->__('Error! Book not found.'));
+            return System::redirect(ModUtil::url('IWbooks', 'admin', 'view'));
         }
 
         // Security check - important to do this as early as possible to avoid
-        if (!SecurityUtil::checkPermission('IWbooks::Item', "$item[name]::$tid", ACCESS_DELETE)) {
-            $output->Text($this->__('You are not allowed to enter this module'));
-            return $output->GetOutput();
+        if (!SecurityUtil::checkPermission('IWbooks::Item', "$item[titol]::$tid", ACCESS_DELETE)) {
+throw new Zikula_Exception_Forbidden();
         }
 
         // Check for confirmation.
         if (empty($confirmation)) {
-            $output = & new pnHTML();
-            $output->SetInputMode(_PNH_VERBATIMINPUT);
-            $output->Text(IWbooks_adminmenu());
-            $output->SetInputMode(_PNH_PARSEINPUT);
-            $output->Title($this->__('Remove selected book'));
-            $output->ConfirmAction($this->__('Confirm the elimination of the selected book') . ": " . $titol, ModUtil::url('IWbooks', 'admin', 'delete'), $this->__('Cancel the elimination'), DataUtil::formatForDisplay(
-                            ModUtil::url('IWbooks', 'admin', 'view')), array('tid' => $tid));
-            // Return the output that has been generated by this function
-            return $output->GetOutput();
+
+            return $this->view->assign('item', $item)
+                            ->fetch('IWbooks_admin_delete.htm');
         }
         // Confirm authorisation code
         $this->checkCsrfToken();
-        // Load API.  All of the actual work for the deletion of the item is done
-        if (!ModUtil::loadApi('IWbooks', 'admin')) {
-            $output->Text($this->__('Error! Could not load module.'));
-            return $output->GetOutput();
-        }
+
         // The API function is called.  Note that the name of the API function and
         if (ModUtil::apiFunc('IWbooks', 'admin', 'delete', array('tid' => $tid))) {
             // Success
-            SessionUtil::setVar('statusmsg', $this->__('The book has been deleted'));
+            LogUtil::registerStatus($this->__('The book has been deleted'));
         }
         return System::redirect(ModUtil::url('IWbooks', 'admin', 'view'));
     }
@@ -202,28 +205,25 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
             $etapa = 'TOT';
             $nivell = '';
             $materia = 'TOT';
-
             $view->assign('cursselec', $any);
             $view->assign('plaselec', $etapa);
             $view->assign('nivellselec', $nivell);
             $view->assign('materiaselec', $materia);
-
             $view->assign('cursacad', ModUtil::apiFunc('IWbooks', 'user', 'cursacad', array('any' => $any)));
             $view->assign('nivell_abre', ModUtil::apiFunc('IWbooks', 'user', 'reble', array('nivell' => $nivell)));
-            //		$view->assign('mostra_pla', " | ".ModUtil::apiFunc('IWbooks', 'user', 'descriplans', array('etapa' => $etapa)) );
             $view->assign('mostra_pla', " | Tots els plans");
-            //$view->assign('mostra_mat', " | ".ModUtil::apiFunc('IWbooks', 'user', 'nommateria', array('codi_mat' => $materia)) );
             $view->assign('mostra_mat', " | Totes les matèries ");
         }
 
         $startnum = (int) FormUtil::getPassedValue('startnum', 0) - 1;
 
         if (!SecurityUtil::checkPermission('IWbooks::', '::', ACCESS_EDIT)) {
-            return LogUtil::registerPermissionError();
+            throw new Zikula_Exception_Forbidden();
         }
 
         $aanys = ModUtil::apiFunc('IWbooks', 'user', 'anys');
         asort($aanys);
+
         $view->assign('aanys', $aanys);
 
         $aplans = ModUtil::apiFunc('IWbooks', 'user', 'plans', array('tots' => true));
@@ -233,7 +233,13 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
         $anivells = ModUtil::apiFunc('IWbooks', 'user', 'nivells', array('blanc' => true));
         $view->assign('anivells', $anivells);
 
-        $amateries = ModUtil::apiFunc('IWbooks', 'user', 'materies', array('tots' => true));
+        $materies = ModUtil::apiFunc('IWbooks', 'user', 'materies', array('tots' => true));
+
+        $amateries = array('TOT' => $this->__('All'));
+        foreach ($materies as $materia1) {
+            $amateries[$materia1['codi_mat']] = $materia1['materia'];
+        }
+
         $view->assign('amateries', $amateries);
 
         $items = ModUtil::apiFunc('IWbooks', 'user', 'getall', array('startnum' => $startnum,
@@ -245,6 +251,8 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
                     'materia' => $materia,
                     'lectura' => '1'));
 
+        //        print_r($items);        die();
+
         foreach ($items as $key => $item) {
             $items[$key]['lectura'] = ($items[$key]['lectura'] == 1) ? "Sí" : "No";
             $items[$key]['optativa'] = ($items[$key]['optativa'] == 1) ? "Sí" : "No";
@@ -254,16 +262,16 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
                 $options = array();
                 if (SecurityUtil::checkPermission('IWbooks::', "$item[titol]::$item[tid]", ACCESS_EDIT)) {
                     $options[] = array('url' => ModUtil::url('IWbooks', 'admin', 'modify', array('tid' => $item['tid'])),
-                        'image' => 'xedit.gif',
+                        'image' => 'xedit.png',
                         'title' => $this->__('Edit'));
                     if (SecurityUtil::checkPermission('IWbooks::', "$item[titol]::$item[tid]", ACCESS_DELETE)) {
                         $options[] = array('url' => ModUtil::url('IWbooks', 'admin', 'delete', array('tid' => $item['tid'])),
-                            'image' => '14_layer_deletelayer.gif',
+                            'image' => '14_layer_deletelayer.png',
                             'title' => $this->__('Delete'));
                     }
                     if (SecurityUtil::checkPermission('IWbooks::', "$item[titol]::$item[tid]", ACCESS_DELETE)) {
                         $options[] = array('url' => ModUtil::url('IWbooks', 'admin', 'copia', array('tid' => $item['tid'])),
-                            'image' => 'editcopy.gif',
+                            'image' => 'editcopy.png',
                             'title' => $this->__('Copy the following year'));
                     }
                 }
@@ -294,7 +302,7 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
     public function modifyconfig() {
 
         if (!SecurityUtil::checkPermission('activitats::', '::', ACCESS_ADMIN)) {
-            return LogUtil::registerPermissionError();
+            throw new Zikula_Exception_Forbidden();
         }
         $view = Zikula_View::getInstance('IWbooks', false);
         $view->caching = false;
@@ -332,24 +340,23 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
      * module given the information passed back by the modification form
      */
     public function updateconfig() {
-        list($itemsperpage,
-                $fpdf,
-                $any,
-                $encap,
-                $darrer_nivell,
-                $nivells,
-                $plans,
-                $mida_font,
-                $llistar_materials,
-                $marca_aigua) = FormUtil::getPassedValue('itemsperpage', 'fpdf', 'any', 'encap', 'darrer_nivell', 'nivells', 'plans', 'mida_font', 'llistar_materials', 'marca_aigua');
+        $itemsperpage = FormUtil::getPassedValue('itemsperpage', isset($args['itemsperpage']) ? $args['itemsperpage'] : null, 'POST');
+        $fpdf = FormUtil::getPassedValue('fpdf', isset($args['fpdf']) ? $args['fpdf'] : null, 'POST');
+        $any = FormUtil::getPassedValue('any', isset($args['any']) ? $args['any'] : null, 'POST');
+        $encap = FormUtil::getPassedValue('encap', isset($args['encap']) ? $args['encap'] : null, 'POST');
+        $darrer_nivell = FormUtil::getPassedValue('darrer_nivell', isset($args['darrer_nivell']) ? $args['darrer_nivell'] : null, 'POST');
+        $nivells = FormUtil::getPassedValue('nivells', isset($args['nivells']) ? $args['nivells'] : null, 'POST');
+        $plans = FormUtil::getPassedValue('plans', isset($args['plans']) ? $args['plans'] : null, 'POST');
+        $mida_font = FormUtil::getPassedValue('mida_font', isset($args['mida_font']) ? $args['mida_font'] : null, 'POST');
+        $llistar_materials = FormUtil::getPassedValue('llistar_materials', isset($args['llistar_materials']) ? $args['llistar_materials'] : null, 'POST');
+        $marca_aigua = FormUtil::getPassedValue('marca_aigua', isset($args['marca_aigua']) ? $args['marca_aigua'] : null, 'POST');
 
         // Confirm authorisation code
         $this->checkCsrfToken();
 
         if (!(file_exists($fpdf . 'fpdf.php'))) {
-            SessionUtil::setVar('errormsg', "El camí per a la biblioteca 'fpdf' no és correcte: '" . $fpdf . "'");
-            System::redirect(ModUtil::url('IWbooks', 'admin', 'modifyconfig'));
-            return true;
+            LogUtil::registerError($this->__("The way to the 'fpdf' library is not correct: '" . $fpdf . "'"));
+            return System::redirect(ModUtil::url('IWbooks', 'admin', 'modifyconfig'));
         }
 
         if ($llistar_materials == "")
@@ -372,92 +379,25 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
                 ->setVar('llistar_materials', $llistar_materials)
                 ->setVar('marca_aigua', $marca_aigua);
 
-        SessionUtil::setVar('statusmsg', $this->__('Configuration correctly updated'));
+        LogUtil::registerStatus($this->__("Configuration correctly updated"));
         return System::redirect(ModUtil::url('IWbooks', 'admin', 'modifyconfig'));
     }
 
-    /**
-     * Main administration menu
-     */
-    function IWbooks_adminmenu() {
-        $output = & new pnHTML();
-
-        $output->Text(LogUtil::getStatusMessages());
-        //    $output->Linebreak(2);
-        // Start options menu
-        // $output->TableStart($this->__('Textbooks and lectures'));
-        $output->SetInputMode(_PNH_VERBATIMINPUT);
-        $output->Text('<h1>' . $this->__('Textbooks and lectures') . '</h1>');
-        $output->SetOutputMode(_PNH_RETURNOUTPUT);
-
-        // Menu options.  These options are all added in a single row, to add
-        // multiple rows of options the code below would just be repeated
-        $columns = array();
-        $columns[] = $output->URL(DataUtil::formatForDisplay(
-                        ModUtil::url('IWbooks', 'admin', 'new')), $this->__('Add a new book'));
-        $columns[] = $output->URL(DataUtil::formatForDisplay(
-                        ModUtil::url('IWbooks', 'admin', 'view')), $this->__('See all the books entered'));
-
-        if (SecurityUtil::checkPermission('IWbooks::', '::', ACCESS_ADMIN)) {
-            $columns[] = $output->URL(DataUtil::formatForDisplay(
-                            ModUtil::url('IWbooks', 'admin', 'new_mat')), $this->__('Enter new subject'));
-        }
-
-        $columns[] = $output->URL(DataUtil::formatForDisplay(
-                        ModUtil::url('IWbooks', 'admin', 'view_mat')), $this->__('Show subjects'));
-
-        if (SecurityUtil::checkPermission('IWbooks::', '::', ACCESS_ADMIN)) {
-            $columns[] = $output->URL(DataUtil::formatForDisplay(
-                            ModUtil::url('IWbooks', 'admin', 'modifyconfig')), $this->__('Config'));
-
-            $columns[] = $output->URL(DataUtil::formatForDisplay(
-                            ModUtil::url('IWbooks', 'admin', 'copia_prev')), $this->__('Copy the following year'));
-
-            $columns[] = $output->URL(DataUtil::formatForDisplay(
-                            ModUtil::url('IWbooks', 'admin', 'exporta_csv')), $this->__('Export books (CSV)'));
-        }
-
-        $output->SetOutputMode(_PNH_KEEPOUTPUT);
-
-        $output->SetInputMode(_PNH_VERBATIMINPUT);
-        //    $output->TableAddRow($columns);
-        //    $output->TableEnd();
-
-        $output->Text('<div class="pn-menu"> <span class="pn-menuitem-title"> [ ');
-
-        $compta = 0;
-        foreach ($columns as $item) {
-            $compta++;
-            $output->Text($item);
-
-            if ($compta < count($columns))
-                $output->Text(' | ');
-        }
-
-        $output->Text(' ] </span> </div>');
-
-        $output->SetInputMode(_PNH_PARSEINPUT);
-
-        // Return the output that has been generated by this function
-        return $output->GetOutput();
-    }
-
     public function copia($args) {
-        $tid = (int) FormUtil::getPassedValue('tid');
-        $objectid = (int) FormUtil::getPassedValue('objectid');
+        $tid = FormUtil::getPassedValue('tid', isset($args['tid']) ? $args['tid'] : 0, 'GETPOST');
+        $objectid = FormUtil::getPassedValue('objectid', isset($args['objectid']) ? $args['objectid'] : 0, 'GETPOST');
 
-        if (!empty($objectid)) {
+        if (!empty($objectid))
             $tid = $objectid;
-        }
 
         $item = ModUtil::apiFunc('IWbooks', 'user', 'get', array('tid' => $tid));
 
         if (!$item) {
-            return LogUtil::registerError($this->__('No such item found.'), 404);
+            return LogUtil::registerError($this->__('No such item found.'));
         }
 
         if (!SecurityUtil::checkPermission('IWbooks::', '::', ACCESS_ADD)) {
-            return LogUtil::registerPermissionError();
+            throw new Zikula_Exception_Forbidden();
         }
 
         $view = Zikula_View::getInstance('IWbooks', false);
@@ -485,24 +425,23 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
 
         $view->assign('copia', 1);
 
-        $view->assign($item);
-
+        $view->assign('item', $item);
 
         return $view->fetch('IWbooks_admin_modify.htm');
     }
 
     public function new_mat() {
         if (!SecurityUtil::checkPermission('IWbooks::', '::', ACCESS_ADD)) {
-            return DataUtil::formatForDisplayHTML($this->__('Sorry! No authorization to access this module.'));
+            throw new Zikula_Exception_Forbidden();
         }
         return $this->view->fetch('IWbooks_admin_new_mat.htm');
     }
 
     public function create_mat($args) {
-        $item = FormUtil::getPassedValue('item');
+        $item = FormUtil::getPassedValue('item', isset($args['item']) ? $args['item'] : null, 'POST');
 
         if (!SecurityUtil::checkPermission('IWbooks::', "$item[materia]::", ACCESS_ADD)) {
-            return LogUtil::registerPermissionError();
+            throw new Zikula_Exception_Forbidden();
         }
         // Confirm authorisation code
         $this->checkCsrfToken();
@@ -516,12 +455,10 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
     }
 
     public function view_mat($args) {
-        // $startnum = FormUtil::getPassedValue('startnum')-1;
-        $startnum = (int) FormUtil::getPassedValue('startnum', 0);
-
+        $startnum = FormUtil::getPassedValue('startnum', isset($args['startnum']) ? $args['startnum'] : 0, 'GETPOST');
 
         if (!SecurityUtil::checkPermission('IWbooks::', '::', ACCESS_EDIT)) {
-            return LogUtil::registerPermissionError();
+            throw new Zikula_Exception_Forbidden();
         }
 
         $view = Zikula_View::getInstance('IWbooks');
@@ -535,11 +472,11 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
                 $options = array();
                 if (SecurityUtil::checkPermission('IWbooks::', "$item[materia]::$item[tid]", ACCESS_EDIT)) {
                     $options[] = array('url' => ModUtil::url('IWbooks', 'admin', 'modify_mat', array('tid' => $item['tid'])),
-                        'image' => 'xedit.gif',
+                        'image' => 'xedit.png',
                         'title' => $this->__('Edit'));
                     if (SecurityUtil::checkPermission('IWbooks::', "$item[materia]::$item[tid]", ACCESS_DELETE)) {
                         $options[] = array('url' => ModUtil::url('IWbooks', 'admin', 'delete_mat', array('tid' => $item['tid'])),
-                            'image' => '14_layer_deletelayer.gif',
+                            'image' => '14_layer_deletelayer.png',
                             'title' => $this->__('Delete'));
                     }
                 }
@@ -550,89 +487,68 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
 
         $view->assign('IWbooksitems', $items);
         $view->assign('pager', array('numitems' => ModUtil::apiFunc('IWbooks', 'user', 'countitemsmat'),
-            'itemsperpage' => ModUtil::getVar('IWbooks', 'itemsperpage')));
+            'itemsperpage' => $this->getVar('itemsperpage')));
 
         return $view->fetch('IWbooks_admin_view_mat.htm');
     }
 
     public function delete_mat($args) {
-        list($tid,
-                $objectid,
-                $confirmation) = FormUtil::getPassedValue('tid', 'objectid', 'confirmation');
-
-        extract($args);
-        if (!empty($objectid)) 
-            $tid = $objectid;
-
-        if (!ModUtil::loadApi('IWbooks', 'user')) {
-            $output->Text($this->__('Error! Could not load module.'));
-            return $output->GetOutput();
-        }
+        $tid = FormUtil::getPassedValue('tid', isset($args['tid']) ? $args['tid'] : null, 'GETPOST');
+        $confirmation = FormUtil::getPassedValue('confirmation', isset($args['confirmation']) ? $args['confirmation'] : null, 'POST');
 
         $item = ModUtil::apiFunc('IWbooks', 'user', 'get_mat', array('tid' => $tid));
 
         if ($item == false) {
-            $output->Text(_LLIBRESNOSUCHITEM);
-            return $output->GetOutput();
+            LogUtil::registerError($this->__('Error! Book not found.'));
+            return System::redirect(ModUtil::url('IWbooks', 'admin', 'view_mat'));
         }
-        if (!SecurityUtil::checkPermission('IWbooks::Item', "$item[name]::$tid", ACCESS_DELETE)) {
-            $output->Text($this->__('You are not allowed to enter this module'));
-            return $output->GetOutput();
+
+        if (!SecurityUtil::checkPermission('IWbooks::Item', "$item[materia]::$tid", ACCESS_DELETE)) {
+throw new Zikula_Exception_Forbidden();
         }
 
         if (empty($confirmation)) {
-            $output = & new pnHTML();
-
-            $output->SetInputMode(_PNH_VERBATIMINPUT);
-            $output->Text(IWbooks_adminmenu());
-            $output->SetInputMode(_PNH_PARSEINPUT);
-
-            $output->Title($this->__('Delete selected subject'));
-
-            $output->ConfirmAction($this->__('Do you really want to delete?'), ModUtil::url('IWbooks', 'admin', 'delete_mat'), $this->__('Cancel the elimination'), DataUtil::formatForDisplay(ModUtil::url('IWbooks', 'admin', 'view_mat')), array('tid' => $tid));
-
-            // Return the output that has been generated by this function
-            return $output->GetOutput();
+            return $this->view->assign('item', $item)
+                            ->fetch('IWbooks_admin_delete_mat.htm');
         }
 
         // Confirm authorisation code
         $this->checkCsrfToken();
-        if (!ModUtil::loadApi('IWbooks', 'admin')) {
-            $output->Text($this->__('Error! Could not load module.'));
-            return $output->GetOutput();
+
+        if (!ModUtil::apiFunc('IWbooks', 'admin', 'delete_mat', array('tid' => $tid))) {
+            LogUtil::registerError($this->__('Error! Deleting the subject.'));
+            return System::redirect(ModUtil::url('IWbooks', 'admin', 'view_mat'));
         }
 
-        if (ModUtil::apiFunc('IWbooks', 'admin', 'delete_mat', array('tid' => $tid))) {
-            // Success
-            SessionUtil::setVar('statusmsg', $this->__('The subject has been cleared'));
-        }
+        // Success
+        LogUtil::registerStatus($this->__('The subject has been cleared.'));
+
         return System::redirect(ModUtil::url('IWbooks', 'admin', 'view_mat'));
     }
 
     public function modify_mat($args) {
-        $tid = (int) FormUtil::getPassedValue('tid');
-        $objectid = (int) FormUtil::getPassedValue('objectid');
+        $tid = FormUtil::getPassedValue('tid', isset($args['tid']) ? $args['tid'] : null, 'GET');
+        $objectid = FormUtil::getPassedValue('objectid', isset($args['objectid']) ? $args['objectid'] : null, 'POST');
 
-        if (!empty($objectid)) {
+        if (!empty($objectid))
             $tid = $objectid;
-        }
 
         $item = ModUtil::apiFunc('IWbooks', 'user', 'get_mat', array('tid' => $tid));
 
         if (!$item) {
-            return LogUtil::registerError($this->__('No such item found.'), 404);
+            return LogUtil::registerError($this->__('No such item found.'));
         }
 
         if (!SecurityUtil::checkPermission('IWbooks::', '::', ACCESS_ADD)) {
-            return LogUtil::registerPermissionError();
+throw new Zikula_Exception_Forbidden();
         }
 
         return $this->view->assign($item)
-                ->fetch('IWbooks_admin_modify_mat.htm');
+                        ->fetch('IWbooks_admin_modify_mat.htm');
     }
 
     public function update_mat($args) {
-        $item = FormUtil::getPassedValue('item');
+        $item = FormUtil::getPassedValue('item', isset($args['item']) ? $args['item'] : null, 'POST');
         if (isset($args['objectid']) && !empty($args['objectid'])) {
             $item['tid'] = $args['objectid'];
         }
@@ -648,26 +564,8 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
         return System::redirect(ModUtil::url('IWbooks', 'admin', 'view_mat'));
     }
 
-    /**
-     * generate menu fragment
-     */
-    function IWbooks_adminmenu1() {
-        $output = & new pnHTML();
-
-        // Start options menu
-        $output->Text(LogUtil::getStatusMessages());
-        $output->Linebreak(2);
-        $output->TableStart($this->__('Textbooks and lectures'));
-        $output->TableEnd();
-        $output->Linebreak(1);
-        $output->URL(DataUtil::formatForDisplay(ModUtil::url('IWbooks', 'admin', 'main')), $this->__('Back'));
-        $output->Linebreak(2);
-
-        return $output->GetOutput();
-    }
-
     public function exporta_csv() {
-        $any = ModUtil::getVar('IWbooks', 'any');
+        $any = $this->getVar('any');
 
         $where = " WHERE pn_any = '$any' ";
         $orderBy = ' pn_etapa, pn_nivell, pn_codi_mat ';
@@ -703,26 +601,22 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
         header("Content-Disposition: attachment; filename=llibres$any.csv");
         echo $export;
 
-        return SessionUtil::setVar('statusmsg', "S'ha realitzat l'exportació del llibres de l'any $any al fitxer 'llibres$any.csv'");
+        return LogUtil::registerStatus("S'ha realitzat l'exportació del llibres de l'any $any al fitxer 'llibres$any.csv'");
     }
 
     public function copia_prev() {
         if (!SecurityUtil::checkPermission('IWbooks::', '::', ACCESS_ADD)) {
-            return DataUtil::formatForDisplayHTML($this->__('Sorry! No authorization to access this module.'));
+throw new Zikula_Exception_Forbidden();
         }
 
-        $view = Zikula_View::getInstance('IWbooks', false);
-
-        $view->assign('any', ModUtil::getVar('IWbooks', 'any'));
-        $view->assign('noucurs', ModUtil::getVar('IWbooks', 'any') + 1);
-
-        return $view->fetch('IWbooks_admin_copi_prev.htm');
+        return $this->view->assign('any', ModUtil::getVar('IWbooks', 'any'))
+                        ->assign('noucurs', ModUtil::getVar('IWbooks', 'any') + 1)
+                        ->fetch('IWbooks_admin_copi_prev.htm');
     }
 
     public function copia_tot($args) {
-        extract($args);
-        $any = FormUtil::getPassedValue('any');
-        $noucurs = FormUtil::getPassedValue('noucurs');
+        $any = FormUtil::getPassedValue('any', isset($args['any']) ? $args['any'] : null, 'POST');
+        $noucurs = FormUtil::getPassedValue('noucurs', isset($args['noucurs']) ? $args['noucurs'] : null, 'POST');
 
         $where = " WHERE pn_any = '$any' ";
         $orderBy = "";
@@ -736,7 +630,7 @@ class IWbooks_Controller_Admin extends Zikula_AbstractController {
             $result = DBUtil::insertObject($item, 'IWbooks', 'tid');
         }
 
-        SessionUtil::setVar('statusmsg', "S'ha copiat la totalitat dels llibres ($total) de l'any " . $any . " a l'any " . $noucurs);
+        LogUtil::registerStatus("S'ha copiat la totalitat dels llibres ($total) de l'any " . $any . " a l'any " . $noucurs);
 
         return System::redirect(ModUtil::url('IWbooks', 'admin', 'view'));
     }

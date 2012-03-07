@@ -69,12 +69,14 @@
             <td>{$IWbooksitems[IWbooksitems].lectura|safehtml}</td>
             <td>{$IWbooksitems[IWbooksitems].avaluacio|safehtml}</td>
             {strip}
+            {if isset($options)}
             {section name=options loop=$options}
     <a href="{$options[options].url|safetext}" title="{gt text=$options[options].descrip}">
         {gt text="$options[options].title"}
     </a>
     {if !$smarty.section.options.last} {/if}
     {/section}
+    {/if}
     {/strip}
 </td>
 </tr>

@@ -19,15 +19,19 @@
                     <input id="IWbooks_materia" name="item[materia]" type="text" size="50" maxlength="50" value="{$materia|safetext}" />
                 </div>
             </fieldset>
-            <div class="z-formrow z-adminformbuttons">
-                <a href="javascript:document['IWbook'].submit();">
-                    {img modname='core' src='button_ok.png' set='icons/small' __alt="Create" __title="Create"}
-                    {gt text="Actualize"}
-                </a>
-                <a href="{modurl modname=IWbooks type=admin func=view}">
-                    {img modname='core' src='button_cancel.png' set='icons/small' __alt="Cancel" __title="Cancel"}
-                    {gt text="Cancel"}
-                </a>
+            <div class="z-center">
+                <span class="z-buttons">
+                    <a href="javascript:document.forms['IWbook'].submit();">
+                        {img modname='core' src='button_ok.png' set='icons/small' __alt="Create" __title="Create"}
+                        {gt text="Actualize"}
+                    </a>
+                </span>
+                <span class="z-buttons">
+                    <a href="{modurl modname=IWbooks type=admin func=view}">
+                        {img modname='core' src='button_cancel.png' set='icons/small' __alt="Cancel" __title="Cancel"}
+                        {gt text="Cancel"}
+                    </a>
+                </span>
             </div>
         </form>
     </div>
