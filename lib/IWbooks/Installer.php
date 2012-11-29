@@ -57,7 +57,7 @@ C#P5');
         $dom = ZLanguage::getModuleDomain('IWbooks');
         switch ($oldversion) {
             case 0.8:
-                $dbconn =& DBConnectionStack::getConnection(true);
+                $dbconn = & DBConnectionStack::getConnection(true);
                 $pntable = & DBUtil::getTables();
 
                 $llibrestable = $pntable['llibres'];
@@ -89,7 +89,7 @@ BAR#Batxillerat Artístic');
 
             case 0.9:
                 // Codi per a versió 1.0
-                $dbconn =& DBConnectionStack::getConnection(true);
+                $dbconn = & DBConnectionStack::getConnection(true);
                 $pntable = & DBUtil::getTables();
 
                 $llibrestable = $pntable['llibres'];
@@ -124,12 +124,7 @@ BAR#Batxillerat Artístic');
 A#P3|
 B#P4|
 C#P5');
-                $dbconn =& DBConnectionStack::getConnection(true);
-                $pntable = & DBUtil::getTables();
-                $prefix = $GLOBALS[PNConfig][System][prefix];
-                $sql = 'ALTER TABLE ' . $prefix . '_IWbooks_llibres
-					RENAME TO ' . $pntable['IWbooks'];
-                $dbconn->Execute($sql);
+
 
                 if (!DBUtil::changeTable('IWbooks')) {
                     return false;
@@ -169,4 +164,5 @@ C#P5');
         // Acció d'esborrar acabada amb èxit
         return true;
     }
+
 }
